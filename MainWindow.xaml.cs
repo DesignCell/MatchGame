@@ -15,53 +15,109 @@ using System.Windows.Shapes;
 
 namespace MatchGame
 {
+    using System.Windows.Threading;
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
+        DispatcherTimer timer = new DispatcherTimer();
+        int tentsTimer;
+        int matchesFound;
+        double ticksSec = 10;
         public MainWindow()
         {
             InitializeComponent();
 
+            timer.Interval = TimeSpan.FromSeconds(1/ticksSec);
+            timer.Tick += Timer_Tick;
+
             SetUpGame();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            tentsTimer++;
+            tbTimer.Text = (tentsTimer / ticksSec).ToString("0.0s");
+            if (matchesFound == 8)
+            {
+                timer.Stop();
+                tbTimer.Text = tbTimer.Text + " Play Again?";
+            }
         }
 
         private void SetUpGame()
         {
-            // Some fun emojis from https://emojipedia.org/nature/
-            List<string> funEmojis = new List<string>()
+            List<string> setEmojis_opt = new List<string>()
             {
-                "🗝","🗝",
-                "🔑","🔑",
-                "🐵","🐵",
                 "🐱","🐱",
+                "😼","😼",
                 "😹","😹",
+                "🙀","🙀",
                 "😻","😻",
-                "😸","😸",
                 "😺","😺",
-                "🦊","🦊",
-                "🐶","🐶",
-                "🐕","🐕",
-                "🐒","🐒",
+                "😸","😸",
+                "😽","😽"
+            };
+            List<string> setEmojis = new List<string>()
+            {
+                "🌸","🌸",
                 "🌹","🌹",
                 "🌺","🌺",
                 "🌷","🌷",
-                "🌈","🌈"
+                "🌼","🌼",
+                "💮","💮",
+                "🏵","🏵",
+                "🌻","🌻"
             };
-
             Random random = new Random();
 
             foreach (TextBlock textBlock in mainGrid.Children.OfType<TextBlock>())
             {
-                int index = random.Next(funEmojis.Count);
-                string nextEmoji = funEmojis[index];
+                if (textBlock.Name == "tbTimer") 
+                    continue;
+                int index = random.Next(setEmojis.Count);
+                string nextEmoji = setEmojis[index];
                 textBlock.Text = nextEmoji;
-                funEmojis.RemoveAt(index);
+                textBlock.Visibility = Visibility.Visible;
+                setEmojis.RemoveAt(index);
 
             }
 
+            timer.Start();
+            matchesFound = 0;
+            tentsTimer = 0;
+        }
 
+        TextBlock lastClicked;
+        bool findingMatch = false;
+        private void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            TextBlock textBlock = sender as TextBlock;
+            if (findingMatch == false)
+            {
+                textBlock.Visibility = Visibility.Hidden;
+                findingMatch = true;
+                lastClicked = textBlock;
+            }
+            else if (textBlock.Text == lastClicked.Text)
+            {
+                textBlock.Visibility = Visibility.Hidden;
+                findingMatch = false;
+                matchesFound++;
+            }
+            else
+            {
+                lastClicked.Visibility = Visibility.Visible;
+                findingMatch = false;
+
+            }
+        }
+
+        private void tbTimer_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (matchesFound == 8)
+                SetUpGame();
         }
     }
 }
